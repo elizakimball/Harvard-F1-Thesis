@@ -1,0 +1,13 @@
+.devcontainer/
+.env/
+.github/
+.elasticbeanstalk/*
+.git
+.gitignore
+**/tests/
+notebook.ipynb
+**/__pycache__/
+Dockerfile
+LICENSE
+CONTRIBUTING.md
+README.md

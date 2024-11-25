@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+
+jobs:
+  lint:
+    name: "Run Linting"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Install Poetry
+        run: pipx install poetry==1.8.3
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: poetry
+      
+      - name: Install GDAL
+        run: |
+          sudo apt-get install -y --no-install-recommends gdal-bin
+
+      - name: Install Dependencies & Activate Environment
+        run: |
+          poetry install --without local
+          VIRTUAL_ENV=$(poetry env info --path)
+          echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+
+      - name: Run Linting
+        run: |
+          make lint

@@ -1,0 +1,270 @@
+Project "My Django Project" {
+Note:  '''A project with a database
+Last Updated At 08-28-2024 10:03PM UTC'''
+}
+
+Table PointSystem {
+  id big_auto [pk, unique]
+  reference char [null, unique]
+  name char [null]
+  driver_position_points positive_small_integer 
+  driver_fastest_lap positive_small_integer [default:`0`]
+  team_position_points positive_small_integer 
+  team_fastest_lap positive_small_integer [default:`0`]
+  partial positive_small_integer [default:`0`]
+  shared_drive positive_small_integer [default:`0`]
+  is_double_points boolean [default:`False`]
+  Note: '''Session point calculation rules'''
+}
+
+
+Table ChampionshipSystem {
+  id big_auto [pk, unique]
+  reference char [null, unique]
+  name char [null]
+  eligibility positive_small_integer 
+  driver_season_split positive_small_integer 
+  driver_best_results small_integer 
+  team_season_split positive_small_integer 
+  team_best_results small_integer 
+  Note: '''Drivers and Team Championship score calculation rules'''
+}
+
+
+Table ChampionshipAdjustment {
+  id big_auto [pk, unique]
+  season foreign_key 
+  driver foreign_key [null]
+  team foreign_key [null]
+  adjustment positive_small_integer 
+  points float [note: '''
+Points to deduct if POINT_DEDUCTION adjustment, otherwise null
+''', null]
+  Note: '''Adjustments such as Disqualifications and Exclusions from Driver/Team Championships'''
+}
+ref: ChampionshipAdjustment.season > Season.id
+ref: ChampionshipAdjustment.driver > Driver.id
+ref: ChampionshipAdjustment.team > Team.id
+
+
+Table DriverChampionship {
+  id big_auto [pk, unique]
+  session foreign_key 
+  driver foreign_key 
+  year small_integer 
+  round_number positive_small_integer 
+  session_number positive_small_integer 
+  position small_integer [null]
+  points float 
+  win_count small_integer 
+  highest_finish small_integer [null]
+  is_eligible boolean [default:`False`]
+  adjustment_type positive_small_integer [default:`0`]
+  season foreign_key [null]
+  round foreign_key [null]
+  Note: '''DriverChampionship(id, session, driver, year, round_number, session_number, position, points, win_count, highest_finish, is_eligible, adjustment_type, season, round)'''
+}
+ref: DriverChampionship.session > Session.id
+ref: DriverChampionship.driver > Driver.id
+ref: DriverChampionship.season > Season.id
+ref: DriverChampionship.round > Round.id
+
+
+Table TeamChampionship {
+  id big_auto [pk, unique]
+  session foreign_key 
+  team foreign_key 
+  year small_integer 
+  round_number positive_small_integer 
+  session_number positive_small_integer 
+  position small_integer [null]
+  points float 
+  win_count small_integer 
+  highest_finish small_integer [null]
+  is_eligible boolean [default:`False`]
+  adjustment_type positive_small_integer [default:`0`]
+  season foreign_key [null]
+  round foreign_key [null]
+  Note: '''TeamChampionship(id, session, team, year, round_number, session_number, position, points, win_count, highest_finish, is_eligible, adjustment_type, season, round)'''
+}
+ref: TeamChampionship.session > Session.id
+ref: TeamChampionship.team > Team.id
+ref: TeamChampionship.season > Season.id
+ref: TeamChampionship.round > Round.id
+
+
+Table Circuit {
+  id big_auto [pk, unique]
+  reference char [null, unique]
+  name char 
+  locality char [null]
+  country char [null]
+  location None [null]
+  altitude float [null]
+  wikipedia url [null]
+  Note: '''Round venue information'''
+}
+
+
+Table Driver {
+  id big_auto [pk, unique]
+  reference char [null, unique]
+  forename char 
+  surname char 
+  abbreviation char [null]
+  nationality char [null]
+  permanent_car_number positive_small_integer [null]
+  date_of_birth date [null]
+  wikipedia url [null]
+  Note: '''Session Participant / Racing Driver Information
+
+    May track reserve drivers with no sessions, or junior drivers only taking part in practice sessions.'''
+}
+
+
+Table Lap {
+  id big_auto [pk, unique]
+  session_entry foreign_key 
+  number positive_small_integer [null]
+  position positive_small_integer [null]
+  time duration [null]
+  average_speed float [null]
+  is_entry_fastest_lap boolean [default:`False`]
+  is_deleted boolean [default:`False`]
+  Note: '''Information on a driven Lap of Race, Qualifying, or any other session for a driver'''
+}
+ref: Lap.session_entry > SessionEntry.id
+
+
+Table PitStop {
+  id big_auto [pk, unique]
+  session_entry foreign_key 
+  lap one_to_one [null, unique]
+  number positive_small_integer [null]
+  duration duration [null]
+  local_timestamp char [null]
+  Note: '''Pit Stop information for a session'''
+}
+ref: PitStop.session_entry > SessionEntry.id
+ref: PitStop.lap - Lap.id
+
+
+Table Round {
+  id big_auto [pk, unique]
+  season foreign_key 
+  circuit foreign_key 
+  number positive_small_integer [null]
+  name char [null]
+  date date [null]
+  race_number positive_small_integer [null]
+  wikipedia url [null]
+  is_cancelled boolean [default:`False`]
+  Note: '''Race event information relevent to all sessions'''
+}
+ref: Round.season > Season.id
+ref: Round.circuit > Circuit.id
+
+
+Table RoundEntry {
+  id big_auto [pk, unique]
+  round foreign_key 
+  team_driver foreign_key 
+  car_number positive_small_integer [null]
+  Note: '''All data relating to a driver racing for a specific team for a race'''
+}
+ref: RoundEntry.round > Round.id
+ref: RoundEntry.team_driver > TeamDriver.id
+
+
+Table Season {
+  id big_auto [pk, unique]
+  championship_system foreign_key [null]
+  year small_integer [unique]
+  wikipedia url [null]
+  Note: '''Formula 1 Championship season'''
+}
+ref: Season.championship_system > ChampionshipSystem.id
+
+
+Table Session {
+  id big_auto [pk, unique]
+  round foreign_key 
+  number positive_small_integer [null]
+  point_system foreign_key 
+  type char 
+  date date [null]
+  time time [null]
+  scheduled_laps positive_small_integer [null]
+  is_cancelled boolean [default:`False`]
+  Note: '''Information about a scheduled session where cars are on track'''
+}
+ref: Session.round > Round.id
+ref: Session.point_system > PointSystem.id
+
+
+Table SessionEntry {
+  id big_auto [pk, unique]
+  session foreign_key 
+  round_entry foreign_key 
+  position positive_small_integer [null]
+  is_classified boolean [null]
+  status positive_small_integer [null]
+  detail char [null]
+  points float [null]
+  is_eligible_for_points boolean [default:`True`]
+  grid positive_small_integer [null]
+  time duration [null]
+  fastest_lap_rank positive_small_integer [null]
+  laps_completed positive_small_integer [null]
+  Note: '''All information for a round entry for the session'''
+}
+ref: SessionEntry.session > Session.id
+ref: SessionEntry.round_entry > RoundEntry.id
+
+
+Table Penalty {
+  id big_auto [pk, unique]
+  earned foreign_key [null]
+  served foreign_key [null]
+  license_points positive_small_integer [null]
+  position positive_small_integer [null]
+  time duration [null]
+  is_time_served_in_pit boolean [null]
+  Note: '''Penalty given/served in an entry's session'''
+}
+ref: Penalty.earned > SessionEntry.id
+ref: Penalty.served > SessionEntry.id
+
+
+Table BaseTeam {
+  id big_auto [pk, unique]
+  name char [null, unique]
+  Note: '''Underlying Team ignoring rebrands'''
+}
+
+
+Table Team {
+  id big_auto [pk, unique]
+  base_team foreign_key [null]
+  reference char [null, unique]
+  name char 
+  nationality char [null]
+  wikipedia url [null]
+  Note: '''Information about a Constructor / Team'''
+}
+ref: Team.base_team > BaseTeam.id
+
+
+Table TeamDriver {
+  id big_auto [pk, unique]
+  team foreign_key 
+  driver foreign_key 
+  season foreign_key 
+  role positive_small_integer [null]
+  Note: '''Membership of a Driver to a Team for a given season'''
+}
+ref: TeamDriver.team > Team.id
+ref: TeamDriver.driver > Driver.id
+ref: TeamDriver.season > Season.id
+
+
